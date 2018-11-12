@@ -24,6 +24,14 @@ namespace Sample.Concurrency.Web.Api
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            #region Add Entity Framework 
+
+            services.AddDbContext<CatalogDbContext>(options =>
+                options.UseSqlServer(Configuration.GetConnectionString("CatalogModelConnection")));
+
+            services.AddScoped<IUnitOfWork, CatalogUnitOfWork>();
+            #endregion
+
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
         }
 
