@@ -1,4 +1,5 @@
 ﻿using Sample.Concurrency.Data.Entities;
+using Sample.Concurrency.Data.Repositories;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -8,7 +9,7 @@ namespace Sample.Concurrency.Data.UnitsOfWork
 {
     public interface IUnitOfWork : IDisposable
     {
-        //ProductsRepository Products { get; }
+        ProductRepository Products { get; }
 
         void Update<T>(T entity) where T : BaseEntity;
 

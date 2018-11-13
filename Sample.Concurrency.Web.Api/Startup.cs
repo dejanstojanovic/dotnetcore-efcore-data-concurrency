@@ -1,14 +1,14 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
+using AutoMapper;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
+using Sample.Concurrency.Data;
+using Sample.Concurrency.Data.UnitsOfWork;
 
 namespace Sample.Concurrency.Web.Api
 {
@@ -29,7 +29,21 @@ namespace Sample.Concurrency.Web.Api
             services.AddDbContext<CatalogDbContext>(options =>
                 options.UseSqlServer(Configuration.GetConnectionString("CatalogModelConnection")));
 
-            services.AddScoped<IUnitOfWork, CatalogUnitOfWork>();
+            services.AddScoped<IUnitOfWork, ProductCatalogUnitOfWork>();
+            #endregion
+
+            #region Add AutoMapper
+
+            //Add all mapping profiles from the assembly
+            services.AddSingleton(provider => new MapperConfiguration(cfg =>
+            {
+                foreach (var profile in this.GetType().Assembly.GetTypes()
+                     .Where(t => t.IsClass && !t.IsAbstract && t.IsSubclassOf(typeof(Profile)))
+                     .Select(t => Activator.CreateInstance(t) as Profile))
+                {
+                    cfg.AddProfile(profile);
+                }
+            }).CreateMapper());
             #endregion
 
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);

@@ -1,39 +1,65 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
+using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Sample.Concurrency.Data.Entities;
+using Sample.Concurrency.Data.UnitsOfWork;
 using Sample.Concurrency.Web.Api.Models;
 
 namespace Sample.Concurrency.Web.Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class ProductsController : ControllerBase
+    public class ProductsController : BaseController
     {
-        [HttpGet]
-        public ActionResult<IEnumerable<ProductViewModel>> Get()
+        public ProductsController(IUnitOfWork unitOfWork,IMapper mapper) : base(unitOfWork,mapper)
         {
-            throw new NotImplementedException();
         }
 
-        [HttpGet("{id}")]
-        public ProductEditModel Get(int id)
+        [HttpGet]
+        public async Task<IEnumerable<ProductViewModel>> Get()
         {
-            throw new NotImplementedException();
+            return await Task.FromResult(this.mapper.Map<IEnumerable<ProductViewModel>>(unitOfWork.Products.Get()));
+        }
+
+        [HttpGet("{id}", Name = "Product")]
+        public async Task<ProductEditModel> Get(Guid id)
+        {
+            return this.mapper.Map<ProductEditModel>(await unitOfWork.Products.GetByIdAsync(id));
         }
 
         [HttpPost]
-        public void Post([FromBody] ProductAddModel product)
+        public async Task<IActionResult> Post([FromBody] ProductAddModel product)
         {
+            var entity = this.mapper.Map<Product>(product);
+            await this.unitOfWork.Products.InsertAsync(entity);
+            await this.unitOfWork.SaveAsync();
+
+            return CreatedAtRoute(routeName: "Product", routeValues: new { id = entity.Id.ToString() }, value: entity.Id);
         }
 
         [HttpPut("{id}")]
-        public void Patch(int id, [FromBody] ProductEditModel product)
+        public async Task<IActionResult> Patch(int id, [FromBody] ProductEditModel product)
         {
+            await this.unitOfWork.Products.InsertAsync(this.mapper.Map<Product>(product));
+            try
+            {
+                await this.unitOfWork.SaveAsync();
+            }
+            catch (DbUpdateConcurrencyException ex)
+            {
+                return Conflict(ex);
+            }
+            return Ok();
         }
 
         [HttpDelete("{id}")]
-        public void Delete(int id)
+        public async Task Delete(Guid id)
         {
+            this.unitOfWork.Products.Remove(id);
+            await this.unitOfWork.SaveAsync();
         }
     }
 }

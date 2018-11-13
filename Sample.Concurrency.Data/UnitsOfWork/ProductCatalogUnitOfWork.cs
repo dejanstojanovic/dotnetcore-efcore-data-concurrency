@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 using Sample.Concurrency.Data.Entities;
+using Sample.Concurrency.Data.Repositories;
 
 namespace Sample.Concurrency.Data.UnitsOfWork
 {
@@ -13,7 +14,18 @@ namespace Sample.Concurrency.Data.UnitsOfWork
 
         public IDatabaseTransaction BeginTransaction => new EntityDatabaseTransaction(this.dbContext);
 
-        public void Update<T>(T entity) where T : BaseEntity
+        public ProductRepository Products { get; private set; }
+
+        public ProductCatalogUnitOfWork(CatalogDbContext dbContext)
+        {
+            this.disposing = false;
+            this.dbContext = dbContext;
+            this.Products = new ProductRepository(dbContext);
+        }
+
+
+
+            public void Update<T>(T entity) where T : BaseEntity
         {
             this.dbContext.Set<T>().Update(entity);
         }
