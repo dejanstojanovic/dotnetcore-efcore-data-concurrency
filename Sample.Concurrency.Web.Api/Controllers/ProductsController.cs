@@ -40,7 +40,7 @@ namespace Sample.Concurrency.Web.Api.Controllers
             return CreatedAtRoute(routeName: "Product", routeValues: new { id = entity.Id.ToString() }, value: entity.Id);
         }
 
-        [HttpPut("{id}")]
+        [HttpPatch("{id}")]
         public async Task<IActionResult> Patch(int id, [FromBody] ProductEditModel product)
         {
             await this.unitOfWork.Products.InsertAsync(this.mapper.Map<Product>(product));
